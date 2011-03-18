@@ -22,6 +22,7 @@ require 'strscan'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
     include Puppet::Util
+    include Puppet::Util::Diff
 
     confine :true => Puppet.features.augeas?
 
@@ -29,6 +30,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     SAVE_NOOP = "noop"
     SAVE_OVERWRITE = "overwrite"
+    SAVE_NEWFILE = "newfile"
+    SAVE_BACKUP = "backup"
 
     COMMANDS = {
       "set" => [ :path, :string ],
@@ -286,14 +289,19 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 # actually do the save.
                 if return_value and get_augeas_version >= "0.3.6"
                     debug("Will attempt to save and only run if files changed")
-                    set_augeas_save_mode(SAVE_NOOP)
+                    set_augeas_save_mode(SAVE_NEWFILE)
                     do_execute_changes
                     save_result = @aug.save
-                    saved_files = @aug.match("/augeas/events/saved")
+                    saved_files = @aug.get("/augeas/events/saved")
                     if save_result and not files_changed?
                         debug("Skipping because no files were changed")
                         return_value = false
                     else
+                        saved_files.each do |tmp_file|
+                          saved_file = tmp_file.sub(/^\/files/, '')
+                          info(diff(saved_file, saved_file + ".augnew"))
+                          File.delete(saved_file + ".augnew")
+                        end
                         debug("Files changed, should execute")
                     end
                 end
