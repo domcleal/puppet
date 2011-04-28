@@ -18,6 +18,7 @@ require 'strscan'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util
+  include Puppet::Util::Diff
 
   confine :true => Puppet.features.augeas?
 
@@ -25,6 +26,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   SAVE_NOOP = "noop"
   SAVE_OVERWRITE = "overwrite"
+  SAVE_NEWFILE = "newfile"
+  SAVE_BACKUP = "backup"
 
   COMMANDS = {
     "set" => [ :path, :string ],
@@ -287,20 +290,29 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         # actually do the save.
         if return_value and get_augeas_version >= "0.3.6"
           debug("Will attempt to save and only run if files changed")
-          set_augeas_save_mode(SAVE_NOOP)
+          set_augeas_save_mode(SAVE_NEWFILE)
           do_execute_changes
           save_result = @aug.save
-          saved_files = @aug.match("/augeas/events/saved")
+          saved_files = @aug.get("/augeas/events/saved")
           if save_result and not files_changed?
             debug("Skipping because no files were changed")
             return_value = false
           else
+            saved_files.each do |tmp_file|
+              saved_file = tmp_file.sub(/^\/files/, '')
+              info(diff(saved_file, saved_file + ".augnew"))
+              if Puppet[:noop]
+                File.delete(saved_file + ".augnew")
+              end
+            end
             debug("Files changed, should execute")
           end
         end
       end
     ensure
-      close_augeas
+      if Puppet[:noop]
+        close_augeas
+      end
     end
     return_value
   end
@@ -309,10 +321,20 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     # Re-connect to augeas, and re-execute the changes
     begin
       open_augeas
-      set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
-
-      do_execute_changes
-
+      saved_files = @aug.get("/augeas/events/saved")
+      if saved_files 
+        saved_files.each do |tmp_file|
+          saved_file = tmp_file.sub(/^\/files/, '')
+          if File.exists?(saved_file + ".augnew")
+            File.rename(saved_file + ".augnew", saved_file)
+            debug(saved_file + ".augnew moved to " + saved_file)
+          end
+        end
+      else
+        debug("No saved files, re-executing augeas")
+        set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
+        do_execute_changes
+      end
       success = @aug.save
       fail("Save failed with return code #{success}") if success != true
     ensure
