@@ -347,6 +347,7 @@ describe provider_class do
       @resource = stub("resource")
       @provider = provider_class.new(@resource)
       @augeas = stub("augeas")
+      @augeas.expects(:get).with("/augeas/events/saved").returns(nil)
       @provider.aug= @augeas
       @provider.stubs(:get_augeas_version).returns("0.3.5")
     end

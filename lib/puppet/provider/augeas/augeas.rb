@@ -15,6 +15,7 @@
 
 require 'augeas' if Puppet.features.augeas?
 require 'strscan'
+require 'puppet/util/diff'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util
