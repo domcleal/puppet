@@ -138,7 +138,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     unless @aug
       flags = Augeas::NONE
       flags = Augeas::TYPE_CHECK if resource[:type_check] == :true
-      flags |= Augeas::NO_MODL_AUTOLOAD if resource[:incl]
+
+      if resource[:incl]
+        flags |= Augeas::NO_MODL_AUTOLOAD
+      elsif resource[:context] and resource[:context].match("^/files/.*")
+        # Optimise loading if the context is given
+        flags |= Augeas::NO_LOAD
+      end
+
       root = resource[:root]
       load_path = resource[:load_path]
       debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
@@ -149,6 +156,27 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
+        aug.load
+      elsif resource[:context] and resource[:context].match("^/files/")
+        ctx_path = resource[:context].sub("/files", "")
+
+        # Use the context to identify all 'incl' nodes with globs that match
+        # the file we're editing.
+        incl_paths = {}
+        aug.match("/augeas/load//incl").each do |incl_augp|
+          incl_path = aug.get(incl_augp)
+          incl_paths[incl_augp] = incl_path if incl_path and glob_matches?(incl_path, ctx_path)
+        end
+
+        # Remove all incl nodes and add back the ones known to be appropriate
+        unless incl_paths.empty?
+          aug.rm("/augeas/load//incl")
+          incl_paths.each { |incl_augp,incl_path|
+            aug.set("%s[last()+1]" % incl_augp, incl_path)
+          }
+        else
+          debug("Augeas optimisation failed, unable to find #{ctx_path} in /augeas/load//incl")
+        end
         aug.load
       end
     end
@@ -161,6 +189,31 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       debug("Closed the augeas connection")
       @aug = nil
     end
+  end
+
+  # Test if a glob from Augeas' incl nodes matches a given context path.
+  # Supporting full glob capabilities (a la POSIX, man 7 glob) is tricky and
+  # not used in Augeas yet.
+  def glob_matches?(glob, path)
+    glob = glob.gsub("*", ".*").gsub("?", ".")
+    rglob = Regexp.new(/^#{glob}$/)
+    cpath = path
+
+    # The context path may be more specific than the glob, so strip off the last
+    # path component until it matches
+    until cpath.empty?
+      return true if rglob.match(cpath)
+      cpath = cpath.sub(/\/[^\/]*$/, '')
+    end
+
+    # If the context path is less specific (e.g. /files/etc/sysconfig) then
+    # also match globs for files beneath this path
+    until glob.empty? or glob == "~"
+      return true if rglob.match(path)
+      glob = glob.sub(/\/[^\/]*$/, '')
+      rglob = Regexp.new(/^#{glob}$/)
+    end
+    false
   end
 
   # Used by the need_to_run? method to process get filters. Returns

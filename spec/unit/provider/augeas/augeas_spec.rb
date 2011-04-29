@@ -487,4 +487,53 @@ describe provider_class do
       @provider.execute_changes.should == :executed
     end
   end
+
+  describe "incl glob matching" do
+    before do
+      @resource = stub("resource")
+      @provider = provider_class.new(@resource)
+    end
+
+    it "should match identical path" do
+      glob = "/etc/sysconfig/network"
+      path = "/etc/sysconfig/network"
+      @provider.glob_matches?(glob, path).should == true
+    end
+
+    it "should match path with trailing slash" do
+      glob = "/etc/sysconfig/network"
+      path = "/etc/sysconfig/network/"
+      @provider.glob_matches?(glob, path).should == true
+    end
+
+    it "should match simple * glob" do
+      glob = "/etc/sysconfig/*"
+      path = "/etc/sysconfig/network"
+      @provider.glob_matches?(glob, path).should == true
+    end
+
+    it "should match simple ? glob" do
+      glob = "/etc/sysconfi?/network"
+      path = "/etc/sysconfig/network"
+      @provider.glob_matches?(glob, path).should == true
+    end
+
+    it "should match over-specific path" do
+      glob = "/etc/sysconfig/network"
+      path = "/etc/sysconfig/network/HOSTNAME"
+      @provider.glob_matches?(glob, path).should == true
+    end
+
+    it "should not match different path" do
+      glob = "/etc/sysconfig/network"
+      path = "/etc/sysconfig/i18n"
+      @provider.glob_matches?(glob, path).should == false
+    end
+
+    it "should match unspecific path" do
+      glob = "/etc/sysconfig/network"
+      path = "/etc"
+      @provider.glob_matches?(glob, path).should == true
+    end
+  end
 end
