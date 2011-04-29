@@ -249,6 +249,10 @@ describe provider_class do
   end
 
   describe "need to run" do
+    before do
+      File.stubs(:delete)
+    end
+
     it "should handle no filters" do
       resource = stub("resource")
       resource.stubs(:[]).returns(false).then.returns("").then.returns("")
@@ -337,6 +341,45 @@ describe provider_class do
       augeas_stub.stubs("close")
       provider.aug= augeas_stub
       provider.stubs(:get_augeas_version).returns("0.3.5")
+      provider.need_to_run?.should == false
+    end
+
+    # Ticket 2728 (diff files)
+    it "should call diff when a file is shown to have been changed" do
+      file = "/etc/hosts"
+
+      resource = stub("resource")
+      resource.stubs(:[]).returns(false).then.returns("set /files/foo bar").then.returns("")
+      provider = provider_class.new(resource)
+      augeas_stub = stub("augeas")
+      augeas_stub.expects("set").with("/augeas/save", "newfile")
+      augeas_stub.expects("save").returns(true)
+      augeas_stub.expects("get").with("/augeas/events/saved").returns(["/files#{file}"])
+      augeas_stub.expects("match").with("/augeas/events/saved").returns(["/files#{file}"])
+      augeas_stub.stubs("close")
+
+      provider.aug= augeas_stub
+      provider.stubs(:get_augeas_version).returns("0.7.2")
+      provider.expects(:diff).with("#{file}", "#{file}.augnew")
+      provider.need_to_run?.should == true
+    end
+
+    it "should not call diff if no files change" do
+      file = "/etc/hosts"
+
+      resource = stub("resource")
+      resource.stubs(:[]).returns(false).then.returns("set /files/foo bar").then.returns("")
+      provider = provider_class.new(resource)
+      augeas_stub = stub("augeas")
+      augeas_stub.expects("set").with("/augeas/save", "newfile")
+      augeas_stub.expects("save").returns(true)
+      augeas_stub.expects("get").with("/augeas/events/saved").returns([])
+      augeas_stub.expects("match").with("/augeas/events/saved").returns([])
+      augeas_stub.stubs("close")
+
+      provider.aug= augeas_stub
+      provider.stubs(:get_augeas_version).returns("0.7.2")
+      provider.expects(:diff).never
       provider.need_to_run?.should == false
     end
   end
