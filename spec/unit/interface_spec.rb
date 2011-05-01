@@ -5,16 +5,17 @@ require 'puppet/interface'
 describe Puppet::Interface do
   subject { Puppet::Interface }
 
-  before :all do
-    @faces = Puppet::Interface::FaceCollection.instance_variable_get("@faces").dup
-  end
-
   before :each do
+    @faces = Puppet::Interface::FaceCollection.
+      instance_variable_get("@faces").dup
+    @dq = $".dup
+    $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
     Puppet::Interface::FaceCollection.instance_variable_get("@faces").clear
   end
 
-  after :all do
+  after :each do
     Puppet::Interface::FaceCollection.instance_variable_set("@faces", @faces)
+    $".clear ; @dq.each do |item| $" << item end
   end
 
   describe "#[]" do
@@ -29,11 +30,33 @@ describe Puppet::Interface do
     it "should raise an exception when the requested face doesn't exist" do
       expect { subject[:burrble_toot, :current] }.should raise_error, Puppet::Error
     end
+
+    describe "version matching" do
+      { '1'     => '1.1.1',
+        '1.0'   => '1.0.1',
+        '1.0.1' => '1.0.1',
+        '1.1'   => '1.1.1',
+        '1.1.1' => '1.1.1'
+      }.each do |input, expect|
+        it "should match #{input.inspect} to #{expect.inspect}" do
+          face = subject[:version_matching, input]
+          face.should be
+          face.version.should == expect
+        end
+      end
+
+      %w{1.0.2 1.2}.each do |input|
+        it "should not match #{input.inspect} to any version" do
+          expect { subject[:version_matching, input] }.
+            to raise_error Puppet::Error, /Could not find version/
+        end
+      end
+    end
   end
 
   describe "#define" do
     it "should register the face" do
-      face = subject.define(:face_test_register, '0.0.1')
+      face  = subject.define(:face_test_register, '0.0.1')
       face.should == subject[:face_test_register, '0.0.1']
     end
 
@@ -51,22 +74,16 @@ describe Puppet::Interface do
       subject.new(:foo, '1.0.0').should respond_to(:summary=).with(1).arguments
     end
 
-    it "should set the summary text" do
-      text = "hello, freddy, my little pal"
-      subject.define(:face_test_summary, '1.0.0') do
-        summary text
+    # Required documentation methods...
+    { :summary     => "summary",
+      :description => "This is the description of the stuff\n\nWhee"
+    }.each do |attr, value|
+      it "should support #{attr} in the builder" do
+        face = subject.new(:builder, '1.0.0') do
+          self.send(attr, value)
+        end
+        face.send(attr).should == value
       end
-      subject[:face_test_summary, '1.0.0'].summary.should == text
-    end
-
-    it "should support mutating the summary" do
-      text = "hello, freddy, my little pal"
-      subject.define(:face_test_summary, '1.0.0') do
-        summary text
-      end
-      subject[:face_test_summary, '1.0.0'].summary.should == text
-      subject[:face_test_summary, '1.0.0'].summary = text + text
-      subject[:face_test_summary, '1.0.0'].summary.should == text + text
     end
   end
 
@@ -97,16 +114,6 @@ describe Puppet::Interface do
 
   it "should stringify with its own name" do
     subject.new(:me, '0.0.1').to_s.should =~ /\bme\b/
-  end
-
-  it "should allow overriding of the default format" do
-    face = subject.new(:me, '0.0.1')
-    face.set_default_format :foo
-    face.default_format.should == :foo
-  end
-
-  it "should default to :pson for its format" do
-    subject.new(:me, '0.0.1').default_format.should == :pson
   end
 
   # Why?
@@ -202,6 +209,12 @@ describe Puppet::Interface do
       it "should return an inherited option object" do
         face.get_option(:inherited).should be_an_instance_of subject::Option
       end
+    end
+  end
+
+  it_should_behave_like "documentation on faces" do
+    subject do
+      Puppet::Interface.new(:face_documentation, '0.0.1')
     end
   end
 end
