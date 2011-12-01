@@ -46,7 +46,14 @@ describe provider do
       @provider.install
     end
 
-    it "should support multiple temp repo URLs" do
+    it "should support multiple temp repo URLs as string" do
+      @resource[:ensure] = :latest
+      @resource[:source] = "http://example.net/repo#{$/}http://example.net/foo"
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-i', 'TESTpkg')
+      @provider.install
+    end
+
+    it "should support multiple temp repo URLs as array" do
       @resource[:ensure] = :latest
       @resource[:source] = [ 'http://example.net/repo', 'http://example.net/foo' ]
       @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-i', 'TESTpkg')
@@ -66,7 +73,13 @@ describe provider do
       @provider.update
     end
 
-    it "should support multiple temp repo URLs" do
+    it "should support multiple temp repo URLs as string" do
+      @resource[:source] = "http://example.net/repo#{$/}http://example.net/foo"
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-u', 'TESTpkg')
+      @provider.update
+    end
+
+    it "should support multiple temp repo URLs as array" do
       @resource[:source] = [ 'http://example.net/repo', 'http://example.net/foo' ]
       @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-u', 'TESTpkg')
       @provider.update
@@ -85,7 +98,13 @@ describe provider do
       @provider.uninstall
     end
 
-    it "should support multiple temp repo URLs" do
+    it "should support multiple temp repo URLs as string" do
+      @resource[:source] = "http://example.net/repo#{$/}http://example.net/foo"
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-r', 'TESTpkg')
+      @provider.uninstall
+    end
+
+    it "should support multiple temp repo URLs as array" do
       @resource[:source] = [ 'http://example.net/repo', 'http://example.net/foo' ]
       @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-r', 'TESTpkg')
       @provider.uninstall
