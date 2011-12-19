@@ -19,9 +19,11 @@
 
 require 'augeas' if Puppet.features.augeas?
 require 'strscan'
+require 'puppet/util/package'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util
+  include Puppet::Util::Package
 
   confine :true => Puppet.features.augeas?
 
@@ -143,7 +145,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
       @aug = Augeas::open(root, load_path,flags)
 
-      debug("Augeas version #{get_augeas_version} is installed") if get_augeas_version >= "0.3.6"
+      debug("Augeas version #{get_augeas_version} is installed") if versioncmp(get_augeas_version, "0.3.6") >= 0
 
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
@@ -279,7 +281,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         # If we have a verison of augeas which is at least 0.3.6 then we
         # can make the changes now, see if changes were made, and
         # actually do the save.
-        if return_value and get_augeas_version >= "0.3.6"
+        if return_value and versioncmp(get_augeas_version, "0.3.6") >= 0
           debug("Will attempt to save and only run if files changed")
           set_augeas_save_mode(SAVE_NOOP)
           do_execute_changes
@@ -303,7 +305,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     # Re-connect to augeas, and re-execute the changes
     begin
       open_augeas
-      set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
+      set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
 
       do_execute_changes
 
