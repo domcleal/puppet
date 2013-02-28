@@ -3,7 +3,7 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows? do
   it "should have a :refreshable feature that requires the :remount method" do
-    Puppet::Type.type(:mount).provider_feature(:refreshable).methods.should == [:remount]
+    Puppet::Type.type(:mount).provider_feature(:refreshable).tests[0].values.should == [:remount]
   end
 
   it "should have no default value for :ensure" do

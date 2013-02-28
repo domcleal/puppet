@@ -3,11 +3,11 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:service) do
   it "should have an :enableable feature that requires the :enable, :disable, and :enabled? methods" do
-    Puppet::Type.type(:service).provider_feature(:enableable).methods.should == [:disable, :enable, :enabled?]
+    Puppet::Type.type(:service).provider_feature(:enableable).tests[0].values.should == [:disable, :enable, :enabled?]
   end
 
   it "should have a :refreshable feature that requires the :restart method" do
-    Puppet::Type.type(:service).provider_feature(:refreshable).methods.should == [:restart]
+    Puppet::Type.type(:service).provider_feature(:refreshable).tests[0].values.should == [:restart]
   end
 end
 

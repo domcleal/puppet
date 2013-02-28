@@ -7,19 +7,19 @@ describe Puppet::Type.type(:package) do
   end
 
   it "should have an :installable feature that requires the :install method" do
-    Puppet::Type.type(:package).provider_feature(:installable).methods.should == [:install]
+    Puppet::Type.type(:package).provider_feature(:installable).tests[0].values.should == [:install]
   end
 
   it "should have an :uninstallable feature that requires the :uninstall method" do
-    Puppet::Type.type(:package).provider_feature(:uninstallable).methods.should == [:uninstall]
+    Puppet::Type.type(:package).provider_feature(:uninstallable).tests[0].values.should == [:uninstall]
   end
 
   it "should have an :upgradeable feature that requires :update and :latest methods" do
-    Puppet::Type.type(:package).provider_feature(:upgradeable).methods.should == [:update, :latest]
+    Puppet::Type.type(:package).provider_feature(:upgradeable).tests[0].values.should == [:update, :latest]
   end
 
   it "should have a :purgeable feature that requires the :purge latest method" do
-    Puppet::Type.type(:package).provider_feature(:purgeable).methods.should == [:purge]
+    Puppet::Type.type(:package).provider_feature(:purgeable).tests[0].values.should == [:purge]
   end
 
   it "should have a :versionable feature" do

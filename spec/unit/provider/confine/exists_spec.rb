@@ -16,12 +16,12 @@ describe Puppet::Provider::Confine::Exists do
   it "should not pass if exists is nil" do
     confine = Puppet::Provider::Confine::Exists.new(nil)
     confine.label = ":exists => nil"
-    confine.expects(:pass?).with(nil)
+    confine.expects(:pass?).with(nil, nil)
     confine.should_not be_valid
   end
 
   it "should use the 'pass?' method to test validity" do
-    @confine.expects(:pass?).with("/my/file")
+    @confine.expects(:pass?).with("/my/file", nil)
     @confine.valid?
   end
 
@@ -75,6 +75,6 @@ describe Puppet::Provider::Confine::Exists do
     c2 = mock '2', :summary => %w{two}
     c3 = mock '3', :summary => %w{three}
 
-    Puppet::Provider::Confine::Exists.summarize([c1, c2, c3]).should == %w{one two three}
+    Puppet::Provider::Confine::Exists.summarize([c1, c2, c3], nil).should == %w{one two three}
   end
 end

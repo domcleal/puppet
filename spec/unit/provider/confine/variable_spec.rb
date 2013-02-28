@@ -89,7 +89,7 @@ describe Puppet::Provider::Confine::Variable do
       c3.name = "tres"
       c3.expects(:valid?).returns false
 
-      Puppet::Provider::Confine::Variable.summarize([c1, c2, c3]).should == {"uno" => %w{one}, "tres" => %w{three}}
+      Puppet::Provider::Confine::Variable.summarize([c1, c2, c3], nil).should == {"uno" => %w{one}, "tres" => %w{three}}
     end
 
     it "should combine the values of multiple confines with the same fact" do
@@ -100,7 +100,7 @@ describe Puppet::Provider::Confine::Variable do
       c2.name = "uno"
       c2.expects(:valid?).returns false
 
-      Puppet::Provider::Confine::Variable.summarize([c1, c2]).should == {"uno" => %w{one two}}
+      Puppet::Provider::Confine::Variable.summarize([c1, c2], nil).should == {"uno" => %w{one two}}
     end
   end
 end

@@ -56,14 +56,14 @@ class Puppet::Provider::Confine
   end
 
   # Collect the results of all of them.
-  def result
-    values.collect { |value| pass?(value) }
+  def result(obj = nil)
+    values.collect { |value| pass?(value, obj) }
   end
 
   # Test whether our confine matches.
-  def valid?
+  def valid?(obj = nil)
     values.each do |value|
-      unless pass?(value)
+      unless pass?(value, obj)
         Puppet.debug(label + ": " + message(value))
         return false
       end

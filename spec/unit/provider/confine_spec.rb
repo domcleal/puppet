@@ -40,7 +40,7 @@ describe Puppet::Provider::Confine do
 
     it "should be invalid if any values fail" do
       @confine.stubs(:pass?).returns true
-      @confine.expects(:pass?).with("b").returns false
+      @confine.expects(:pass?).with("b", nil).returns false
       @confine.should_not be_valid
     end
 
@@ -61,6 +61,12 @@ describe Puppet::Provider::Confine do
       Puppet.expects(:debug).with("Mylabel: My message")
       @confine.valid?
     end
+
+    it "should pass given object into pass?" do
+      obj = mock
+      @confine.expects(:pass?).with("a", obj).returns false
+      @confine.valid?(obj).should be_false
+    end
   end
 
   describe "when testing the result of the values" do
@@ -68,8 +74,8 @@ describe Puppet::Provider::Confine do
 
     it "should return an array with the result of the test for each value" do
       @confine.stubs(:pass?).returns true
-      @confine.expects(:pass?).with("b").returns false
-      @confine.expects(:pass?).with("d").returns false
+      @confine.expects(:pass?).with("b", nil).returns false
+      @confine.expects(:pass?).with("d", nil).returns false
 
       @confine.result.should == [true, false, true, false]
     end

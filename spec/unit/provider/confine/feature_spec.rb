@@ -52,6 +52,6 @@ describe Puppet::Provider::Confine::Feature do
     features.stub_everything
     Puppet.stubs(:features).returns features
 
-    Puppet::Provider::Confine::Feature.summarize(confines).sort.should == %w{one two three four}.sort
+    Puppet::Provider::Confine::Feature.summarize(confines, nil).sort.should == %w{one two three four}.sort
   end
 end

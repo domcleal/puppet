@@ -15,7 +15,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   end
 
   optional_commands :localadd => "lgroupadd"
-  has_feature :libuser if Puppet.features.libuser?
+  confine_feature :libuser, :feature => :libuser
 
   def exists?
     return !!localgid if @resource.forcelocal?

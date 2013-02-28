@@ -40,6 +40,6 @@ module Puppet::Provider::Confiner
   # @api public
   #
   def suitable?(short = true)
-    return(short ? confine_collection.valid? : confine_collection.summary)
+    return(short ? confine_collection.valid?(self) : confine_collection.summary(self))
   end
 end

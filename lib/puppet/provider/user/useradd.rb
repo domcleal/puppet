@@ -42,7 +42,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     }
 
   optional_commands :localadd => "luseradd"
-  has_feature :libuser if Puppet.features.libuser?
+  confine_feature :libuser, :feature => :libuser
 
   def exists?
     return !!localuid if @resource.forcelocal?
@@ -91,8 +91,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   has_features :manages_homedir, :allows_duplicates, :manages_expiry
   has_features :system_users unless %w{HP-UX Solaris}.include? Facter.value(:operatingsystem)
-
-  has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
+  confine_feature :manages_passwords, :feature => :libshadow
+  confine_feature :manages_password_age, :feature => :libshadow
 
   def check_allow_dup
     # We have to manually check for duplicates when using libuser

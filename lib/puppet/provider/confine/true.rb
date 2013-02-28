@@ -1,11 +1,11 @@
 require 'puppet/provider/confine'
 
 class Puppet::Provider::Confine::True < Puppet::Provider::Confine
-  def self.summarize(confines)
+  def self.summarize(confines, obj)
     confines.inject(0) { |count, confine| count + confine.summary }
   end
 
-  def pass?(value)
+  def pass?(value, obj = nil)
     # Double negate, so we only get true or false.
     ! ! value
   end

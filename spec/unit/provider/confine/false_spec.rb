@@ -18,7 +18,7 @@ describe Puppet::Provider::Confine::False do
     it "should use the 'pass?' method to test validity" do
       @confine = Puppet::Provider::Confine::False.new("foo")
       @confine.label = "eh"
-      @confine.expects(:pass?).with("foo")
+      @confine.expects(:pass?).with("foo", nil)
       @confine.valid?
     end
 
@@ -47,6 +47,6 @@ describe Puppet::Provider::Confine::False do
     c2 = mock '2', :summary => 2
     c3 = mock '3', :summary => 3
 
-    Puppet::Provider::Confine::False.summarize([c1, c2, c3]).should == 6
+    Puppet::Provider::Confine::False.summarize([c1, c2, c3], nil).should == 6
   end
 end

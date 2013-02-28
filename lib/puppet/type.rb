@@ -1611,10 +1611,10 @@ class Type
   ###############################
   # All of the provider plumbing for the resource types.
   require 'puppet/provider'
-  require 'puppet/util/provider_features'
+  require 'puppet/provider/features'
 
   # Add the feature handling module.
-  extend Puppet::Util::ProviderFeatures
+  extend Puppet::Provider::Features
 
   # The provider that has been selected for the instance of the resource type.
   # @return [Puppet::Provider,nil] the selected provider or nil, if none has been selected

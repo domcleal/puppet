@@ -8,9 +8,9 @@ class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
   # Provide a hash summary of failing confines -- the key of the hash
   # is the name of the confine, and the value is the missing yet required values.
   # Only returns failed values, not all required values.
-  def self.summarize(confines)
+  def self.summarize(confines, obj)
     result = Hash.new { |hash, key| hash[key] = [] }
-    confines.inject(result) { |total, confine| total[confine.name] += confine.values unless confine.valid?; total }
+    confines.inject(result) { |total, confine| total[confine.name] += confine.values unless confine.valid? obj; total }
   end
 
   # This is set by ConfineCollection.
@@ -31,7 +31,7 @@ class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
   end
 
   # Compare the passed-in value to the retrieved value.
-  def pass?(value)
+  def pass?(value, obj = nil)
     test_value.downcase.to_s == value.to_s.downcase
   end
 
@@ -41,7 +41,7 @@ class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
     @facter_value = nil
   end
 
-  def valid?
+  def valid?(obj = nil)
     @values.include?(test_value.to_s.downcase)
   ensure
     reset
