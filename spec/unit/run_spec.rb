@@ -122,19 +122,36 @@ describe Puppet::Run do
   end
 
   describe ".from_pson" do
-    it "should accept a hash of options, and pass them with symbolified keys to new" do
+    it "should read from a hash that represents the 'options' to initialize" do
       options = {
         "tags" => "whatever",
         "background" => true,
+        "ignoreschedules" => false,
       }
 
       Puppet::Run.expects(:new).with({
+        :pluginsync => Puppet[:pluginsync],
         :tags => "whatever",
         :background => true,
-        :pluginsync => Puppet[:pluginsync]
+        :ignoreschedules => false
       })
+      run = Puppet::Run.from_pson(options)
+    end
 
-      Puppet::Run.from_pson(options)
+    it "should read from a hash that follows the actual object structure" do
+      hash = {"background" => true,
+              "options" => {
+                "tags" => [],
+                "ignoreschedules" => false},
+              "status" => "success"}
+      run = Puppet::Run.from_pson(hash)
+
+      run.options.should == {
+        :tags => [],
+        :ignoreschedules => false
+      }
+      run.background.should be_true
+      run.status.should == 'success'
     end
   end
 end
