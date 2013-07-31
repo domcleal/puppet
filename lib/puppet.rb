@@ -28,6 +28,8 @@ require 'puppet/external/pson/pure'
 #
 # @api public
 module Puppet
+  require 'puppet/file_system'
+
   class << self
     include Puppet::Util
     attr_reader :features
